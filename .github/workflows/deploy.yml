@@ -1,0 +1,48 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+# id-token: write is required for Workload Identity Federation — GitHub
+# issues a short-lived OIDC token this workflow exchanges for GCP access,
+# no long-lived service account key stored in this repo.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: model-link-501109-q5
+  REGION: us-central1
+  SERVICE: mwenyeji-backend
+  WORKLOAD_IDENTITY_PROVIDER: projects/1010018711947/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  SERVICE_ACCOUNT: github-deployer@model-link-501109-q5.iam.gserviceaccount.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Builds the Dockerfile in this repo via Cloud Build and deploys the
+      # resulting image to Cloud Run — no manual docker build/push step
+      # needed. Existing env vars/secrets on the live revision (Mongo URI,
+      # GCS_BUCKET_NAME, etc.) are preserved automatically since this
+      # doesn't pass --set-env-vars or --clear-env-vars.
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT_ID }}
+          source: ./
