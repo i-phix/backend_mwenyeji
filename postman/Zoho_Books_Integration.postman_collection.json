@@ -1,0 +1,506 @@
+{
+	"info": {
+		"_postman_id": "zoho-books-integration-2025",
+		"name": "Zoho Books Integration API",
+		"description": "Complete API collection for Zoho Books integration with invoice and payment management.\n\nBase URL: http://localhost:3000\n\nSample Invoices:\n- BULK17615597683783 (Unit 3, KES 3,480.00)\n- BULK17615597683782 (Unit 2, KES 2,320.00)\n- BULK17615597683781 (Unit 1, KES 1,160.00)\n- IDEMPOTENT1761559761521 (Test, KES 5,800.00)\n- TEST1761559757906",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Connection & Health",
+			"item": [
+				{
+					"name": "Test Connection",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "test-connection"]
+						},
+						"description": "Test connection to Zoho Books API and verify credentials are working."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Credentials",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/validate-credentials",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "validate-credentials"]
+						},
+						"description": "Validate Zoho Books API credentials."
+					},
+					"response": []
+				}
+			],
+			"description": "Health check and connection testing endpoints"
+		},
+		{
+			"name": "2. Invoice Operations",
+			"item": [
+				{
+					"name": "Send Invoice to Zoho",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoiceData\": {\n    \"invoiceNumber\": \"TEST-NEW-001\",\n    \"accountNumber\": \"ACC-001\",\n    \"client\": {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"phone\": \"+254712345678\"\n    },\n    \"facility\": {\n      \"name\": \"Test Facility\"\n    },\n    \"unit\": {\n      \"name\": \"Unit 1A\"\n    },\n    \"currency\": {\n      \"code\": \"KES\"\n    },\n    \"items\": [\n      {\n        \"description\": \"Monthly Rent\",\n        \"quantity\": 1,\n        \"unitPrice\": 50000\n      }\n    ],\n    \"totalAmount\": 50000,\n    \"amountPaid\": 0,\n    \"issueDate\": \"2025-10-27T00:00:00.000Z\",\n    \"dueDate\": \"2025-11-27T00:00:00.000Z\",\n    \"status\": \"Unpaid\"\n  },\n  \"options\": {\n    \"skipIfExists\": true,\n    \"recordPayment\": false,\n    \"markAsSent\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/send",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "send"]
+						},
+						"description": "Create and send a single invoice to Zoho Books."
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Send Invoices",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoices\": [\n    {\n      \"invoiceNumber\": \"BULK-TEST-001\",\n      \"accountNumber\": \"ACC-001\",\n      \"client\": {\n        \"firstName\": \"Jane\",\n        \"lastName\": \"Smith\"\n      },\n      \"facility\": {\n        \"name\": \"Test Facility\"\n      },\n      \"unit\": {\n        \"name\": \"Unit 1\"\n      },\n      \"currency\": {\n        \"code\": \"KES\"\n      },\n      \"items\": [\n        {\n          \"description\": \"Rent\",\n          \"quantity\": 1,\n          \"unitPrice\": 10000\n        }\n      ],\n      \"totalAmount\": 10000,\n      \"issueDate\": \"2025-10-27T00:00:00.000Z\",\n      \"dueDate\": \"2025-11-27T00:00:00.000Z\",\n      \"status\": \"Unpaid\"\n    },\n    {\n      \"invoiceNumber\": \"BULK-TEST-002\",\n      \"accountNumber\": \"ACC-002\",\n      \"client\": {\n        \"firstName\": \"Bob\",\n        \"lastName\": \"Johnson\"\n      },\n      \"facility\": {\n        \"name\": \"Test Facility\"\n      },\n      \"unit\": {\n        \"name\": \"Unit 2\"\n      },\n      \"currency\": {\n        \"code\": \"KES\"\n      },\n      \"items\": [\n        {\n          \"description\": \"Rent\",\n          \"quantity\": 1,\n          \"unitPrice\": 15000\n        }\n      ],\n      \"totalAmount\": 15000,\n      \"issueDate\": \"2025-10-27T00:00:00.000Z\",\n      \"dueDate\": \"2025-11-27T00:00:00.000Z\",\n      \"status\": \"Unpaid\"\n    }\n  ],\n  \"options\": {\n    \"skipIfExists\": true,\n    \"recordPayment\": false,\n    \"markAsSent\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/bulk-send",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "bulk-send"]
+						},
+						"description": "Send multiple invoices to Zoho Books in one operation."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Invoice Status by Number",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/BULK17615597683783/status?type=number",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "BULK17615597683783", "status"],
+							"query": [
+								{
+									"key": "type",
+									"value": "number",
+									"description": "Search by 'number' or 'id'"
+								}
+							]
+						},
+						"description": "Get invoice status and details by invoice number (Unit 3 - KES 3,480.00)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Invoice Status by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/7253014000000113050/status?type=id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "7253014000000113050", "status"],
+							"query": [
+								{
+									"key": "type",
+									"value": "id"
+								}
+							]
+						},
+						"description": "Get invoice status and details by invoice ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Invoice as Sent",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"zohoInvoiceId\": \"7253014000000113050\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/mark-sent",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "mark-sent"]
+						},
+						"description": "Change invoice status from draft to sent."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Invoice as Paid",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"zohoInvoiceId\": \"7253014000000113050\",\n  \"zohoCustomerId\": \"7253014000000113002\",\n  \"amount\": 50000,\n  \"paymentDate\": \"2025-10-27\",\n  \"paymentMode\": \"mpesa\",\n  \"transactionId\": \"TJ96G6WZNE\",\n  \"description\": \"Full payment via M-Pesa\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/mark-paid",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "mark-paid"]
+						},
+						"description": "Mark invoice as paid and record the payment."
+					},
+					"response": []
+				}
+			],
+			"description": "Invoice creation, status checking, and management"
+		},
+		{
+			"name": "3. Payment Operations",
+			"item": [
+				{
+					"name": "Add Payment to Invoice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoiceId\": \"7253014000000113050\",\n  \"customerId\": \"7253014000000113002\",\n  \"amount\": 1000,\n  \"paymentDate\": \"2025-10-27\",\n  \"paymentMode\": \"mpesa\",\n  \"referenceNumber\": \"TJ96G6WZNE\",\n  \"description\": \"Partial payment via M-Pesa\",\n  \"notes\": \"Payment received from customer\",\n  \"sendEmail\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/add",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "add"]
+						},
+						"description": "Add a single payment to an invoice. Supports partial and full payments."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Payment - Unit 3 (Partial)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoiceId\": \"{{unit3_invoice_id}}\",\n  \"customerId\": \"{{unit3_customer_id}}\",\n  \"amount\": 1000,\n  \"paymentDate\": \"2025-10-27\",\n  \"paymentMode\": \"mpesa\",\n  \"referenceNumber\": \"MP-OCT27-001\",\n  \"description\": \"Partial payment for Unit 3 - KES 1,000 of 3,480\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/add",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "add"]
+						},
+						"description": "Add KES 1,000 payment to Unit 3 invoice (BULK17615597683783)"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Payment - Unit 1 (Full)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoiceId\": \"{{unit1_invoice_id}}\",\n  \"customerId\": \"{{unit1_customer_id}}\",\n  \"amount\": 1160,\n  \"paymentDate\": \"2025-10-27\",\n  \"paymentMode\": \"cash\",\n  \"referenceNumber\": \"CASH-OCT27-001\",\n  \"description\": \"Full payment for Unit 1 - KES 1,160\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/add",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "add"]
+						},
+						"description": "Add full payment to Unit 1 invoice (BULK17615597683781)"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Multiple Payments (Installments)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invoiceId\": \"7253014000000113050\",\n  \"customerId\": \"7253014000000113002\",\n  \"payments\": [\n    {\n      \"amount\": 1000,\n      \"paymentDate\": \"2025-10-15\",\n      \"paymentMode\": \"mpesa\",\n      \"referenceNumber\": \"MP-OCT15-001\",\n      \"description\": \"First installment\"\n    },\n    {\n      \"amount\": 1500,\n      \"paymentDate\": \"2025-10-20\",\n      \"paymentMode\": \"mpesa\",\n      \"referenceNumber\": \"MP-OCT20-001\",\n      \"description\": \"Second installment\"\n    },\n    {\n      \"amount\": 1000,\n      \"paymentDate\": \"2025-10-25\",\n      \"paymentMode\": \"bank_transfer\",\n      \"referenceNumber\": \"BT-OCT25-001\",\n      \"description\": \"Third installment\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/add-multiple",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "add-multiple"]
+						},
+						"description": "Add multiple payments to an invoice at once. Useful for recording installment payments."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Invoice Payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/7253014000000113050/payments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "7253014000000113050", "payments"]
+						},
+						"description": "Get all payments for a specific invoice."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/invoices/7253014000000113050/payment-history",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "invoices", "7253014000000113050", "payment-history"]
+						},
+						"description": "Get detailed payment history with statistics and summary."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Payment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 1200,\n  \"date\": \"2025-10-28\",\n  \"reference_number\": \"UPDATED-MP-001\",\n  \"description\": \"Updated payment amount and date\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/7253014000000115001",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "7253014000000115001"]
+						},
+						"description": "Update payment details. Replace payment ID in URL."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Payment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/7253014000000115001",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "7253014000000115001"]
+						},
+						"description": "Delete a payment. This will increase the invoice balance."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment Modes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/modes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "modes"]
+						},
+						"description": "Get list of available payment modes (mpesa, bank_transfer, cash, etc.)"
+					},
+					"response": []
+				},
+				{
+					"name": "Record Payment (Legacy)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"zohoInvoiceId\": \"7253014000000113050\",\n  \"zohoCustomerId\": \"7253014000000113002\",\n  \"amount\": 25000,\n  \"paymentDate\": \"2025-10-27\",\n  \"paymentMode\": \"mpesa\",\n  \"transactionId\": \"TJ96G6WZNE\",\n  \"description\": \"Payment via M-Pesa\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/payments/record",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "payments", "record"]
+						},
+						"description": "Legacy endpoint for recording payment. Use 'Add Payment' endpoint instead."
+					},
+					"response": []
+				}
+			],
+			"description": "Payment management endpoints - add, view, update, and delete payments"
+		},
+		{
+			"name": "4. Customer Operations",
+			"item": [
+				{
+					"name": "Get Customer by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/customers/7253014000000113002?type=id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "customers", "7253014000000113002"],
+							"query": [
+								{
+									"key": "type",
+									"value": "id"
+								}
+							]
+						},
+						"description": "Get customer details by Zoho customer ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/customers/Test Facility Test Unit?type=name",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "customers", "Test Facility Test Unit"],
+							"query": [
+								{
+									"key": "type",
+									"value": "name"
+								}
+							]
+						},
+						"description": "Search customer by name."
+					},
+					"response": []
+				}
+			],
+			"description": "Customer lookup and management"
+		},
+		{
+			"name": "5. Token Management",
+			"item": [
+				{
+					"name": "Get Token Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/token/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "token", "status"]
+						},
+						"description": "Get OAuth token status and expiry information."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/zoho/token/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", "zoho", "token", "refresh"]
+						},
+						"description": "Manually refresh the OAuth access token."
+					},
+					"response": []
+				}
+			],
+			"description": "OAuth token management"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "unit3_invoice_id",
+			"value": "REPLACE_WITH_INVOICE_ID",
+			"type": "string",
+			"description": "Invoice ID for BULK17615597683783 (Unit 3)"
+		},
+		{
+			"key": "unit3_customer_id",
+			"value": "REPLACE_WITH_CUSTOMER_ID",
+			"type": "string",
+			"description": "Customer ID for Unit 3"
+		},
+		{
+			"key": "unit2_invoice_id",
+			"value": "REPLACE_WITH_INVOICE_ID",
+			"type": "string",
+			"description": "Invoice ID for BULK17615597683782 (Unit 2)"
+		},
+		{
+			"key": "unit2_customer_id",
+			"value": "REPLACE_WITH_CUSTOMER_ID",
+			"type": "string",
+			"description": "Customer ID for Unit 2"
+		},
+		{
+			"key": "unit1_invoice_id",
+			"value": "REPLACE_WITH_INVOICE_ID",
+			"type": "string",
+			"description": "Invoice ID for BULK17615597683781 (Unit 1)"
+		},
+		{
+			"key": "unit1_customer_id",
+			"value": "REPLACE_WITH_CUSTOMER_ID",
+			"type": "string",
+			"description": "Customer ID for Unit 1"
+		}
+	]
+}

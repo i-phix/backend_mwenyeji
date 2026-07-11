@@ -1,0 +1,193 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  ZOHO BOOKS AUTOMATIC CREDIT APPLICATION                   ║
+║                          Complete System Flow                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          TRIGGER: New Invoice Created                      │
+│  • Invoice Number: LSE251119641                                           │
+│  • Account Number: 6834568                                                │
+│  • BBF Amount: KES 5,000                                                  │
+│  • Total Amount: KES 10,000                                               │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                       STEP 1: Send Invoice to Zoho                        │
+│  POST /books/v3/invoices                                                  │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ {                                                                  │   │
+│  │   "customer_id": "7253014000000250001",                          │   │
+│  │   "invoice_number": "LSE251119641",                              │   │
+│  │   "reference_number": "6834568",  ← Account Number               │   │
+│  │   "date": "2025-11-19",                                          │   │
+│  │   "line_items": [...]                                            │   │
+│  │ }                                                                  │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│  ✅ Response: invoice_id = "7253014000000255001"                         │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     STEP 2: Eligibility Check                             │
+│  isEligibleForAutoCreditApplication(invoice)                             │
+│                                                                           │
+│  ✅ Has BBF? YES (KES 5,000)                                             │
+│  ✅ Has Account Number? YES (6834568)                                    │
+│  ✅ Has Zoho Invoice ID? YES (7253014000000255001)                       │
+│                                                                           │
+│  RESULT: ✅ ELIGIBLE FOR AUTO-CREDIT                                     │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│             STEP 3: Fetch Available Customer Credits                      │
+│  GET /books/v3/customerpayments?customer_id=7253014000000250001          │
+│                                                                           │
+│  FILTERS:                                                                 │
+│  • unused_amount > 0                                                      │
+│  • invoices == null                                                       │
+│                                                                           │
+│  RESULTS:                                                                 │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ Credit 1: PAY-00001 | KES 3,000 | 2025-11-15 | CASH              │  │
+│  │ Credit 2: PAY-00002 | KES 2,000 | 2025-11-16 | MPESA             │  │
+│  │ Credit 3: PAY-00003 | KES 3,000 | 2025-11-17 | BANK              │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  SORT: By date (oldest first - FIFO)                                     │
+│  TOTAL AVAILABLE: KES 8,000                                               │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                   STEP 4: Apply Credits (Loop)                            │
+│                                                                           │
+│  ┌─────────────────────────── ITERATION 1 ────────────────────────────┐ │
+│  │ Credit: PAY-00001                                                   │ │
+│  │ Available: KES 3,000                                                │ │
+│  │ Remaining BBF: KES 5,000                                            │ │
+│  │ Amount to Apply: min(5000, 3000) = KES 3,000                       │ │
+│  │                                                                      │ │
+│  │ PUT /books/v3/customerpayments/7253014000000237017                 │ │
+│  │ {                                                                   │ │
+│  │   "invoices": [{                                                    │ │
+│  │     "invoice_id": "7253014000000255001",                           │ │
+│  │     "amount_applied": 3000                                          │ │
+│  │   }]                                                                │ │
+│  │ }                                                                   │ │
+│  │                                                                      │ │
+│  │ ✅ Applied: KES 3,000                                               │ │
+│  │ 📊 Remaining BBF: KES 2,000                                         │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                           │
+│  ┌─────────────────────────── ITERATION 2 ────────────────────────────┐ │
+│  │ Credit: PAY-00002                                                   │ │
+│  │ Available: KES 2,000                                                │ │
+│  │ Remaining BBF: KES 2,000                                            │ │
+│  │ Amount to Apply: min(2000, 2000) = KES 2,000                       │ │
+│  │                                                                      │ │
+│  │ PUT /books/v3/customerpayments/7253014000000237018                 │ │
+│  │ {                                                                   │ │
+│  │   "invoices": [{                                                    │ │
+│  │     "invoice_id": "7253014000000255001",                           │ │
+│  │     "amount_applied": 2000                                          │ │
+│  │   }]                                                                │ │
+│  │ }                                                                   │ │
+│  │                                                                      │ │
+│  │ ✅ Applied: KES 2,000                                               │ │
+│  │ 📊 Remaining BBF: KES 0                                             │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                           │
+│  ⏹️  STOP: BBF fully covered (remaining = 0)                            │
+│  Credit 3 (PAY-00003) preserved for future invoices                      │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                 STEP 5: Verify Invoice Balance                            │
+│  GET /books/v3/invoices/7253014000000255001                              │
+│                                                                           │
+│  BEFORE:                                                                  │
+│  • Total: KES 10,000                                                      │
+│  • BBF (implied): KES 5,000                                               │
+│  • Balance: KES 10,000                                                    │
+│                                                                           │
+│  AFTER:                                                                   │
+│  • Total: KES 10,000                                                      │
+│  • Payment Made: KES 5,000 (from credits)                                │
+│  • Balance: KES 5,000                                                     │
+│                                                                           │
+│  ✅ BBF Eliminated: KES 5,000 → KES 0                                    │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                   STEP 6: Update Local Database                           │
+│  POST /api/integrations/zoho/invoices/update-bbf                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ {                                                                  │   │
+│  │   "facilityId": "68354b430bfa0b7ac72078c5",                       │   │
+│  │   "invoiceNumber": "LSE251119641",                                │   │
+│  │   "accountNumber": "6834568",                                     │   │
+│  │   "autoCreditApplied": 5000,                                      │   │
+│  │   "newBBF": 0,                                                    │   │
+│  │   "timestamp": "2025-11-20T10:30:00Z"                             │   │
+│  │ }                                                                  │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                                                           │
+│  ✅ Local invoice updated with credit history                            │
+└────────────────────────────┬─────────────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         FINAL RESULT SUMMARY                              │
+│                                                                           │
+│  ✅ Invoice Created: LSE251119641                                        │
+│  ✅ Credits Found: 3                                                      │
+│  ✅ Credits Applied: 2                                                    │
+│  ✅ Total Amount Applied: KES 5,000                                       │
+│  ✅ Original BBF: KES 5,000                                               │
+│  ✅ New BBF: KES 0                                                        │
+│  ✅ BBF Reduction: 100%                                                   │
+│  ✅ Remaining Credit: KES 3,000 (PAY-00003)                              │
+│                                                                           │
+│  📊 CUSTOMER VIEW:                                                        │
+│     Invoice Total: KES 10,000                                             │
+│     Already Paid (BBF credits): KES 5,000                                │
+│     Amount Due: KES 5,000                                                 │
+│                                                                           │
+│  🎉 SUCCESS: Customer sees accurate, reduced balance immediately!         │
+└──────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         KEY TECHNICAL DETAILS                              ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  ACCOUNT NUMBER STRATEGY:                                                  ║
+║  • Stored in Zoho's "reference_number" field                              ║
+║  • Identifies payer (landlord vs. tenant)                                 ║
+║  • Prefixes: 5xxx/6xxx=regular, 7xxx=water, 8xxx=VAS                     ║
+║  • Prevents cross-payer credit application                                ║
+║                                                                            ║
+║  CREDIT IDENTIFICATION:                                                    ║
+║  • unused_amount > 0                                                       ║
+║  • invoices == null or empty array                                        ║
+║  • Sorted by date (FIFO - oldest first)                                   ║
+║                                                                            ║
+║  AMOUNT CALCULATION:                                                       ║
+║  • amountToApply = Math.min(remainingBBF, creditAvailable)               ║
+║  • Never over-applies                                                      ║
+║  • Preserves unused credit                                                ║
+║                                                                            ║
+║  ERROR HANDLING:                                                           ║
+║  • Non-fatal: Invoice creation succeeds even if credits fail              ║
+║  • Partial application supported                                          ║
+║  • All errors logged with full context                                    ║
+║                                                                            ║
+║  LOGGING:                                                                  ║
+║  • Console: [AUTO-CREDIT] prefix                                          ║
+║  • Winston: Structured JSON logs                                          ║
+║  • Every step tracked for audit                                           ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
