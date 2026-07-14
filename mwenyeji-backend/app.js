@@ -18,6 +18,7 @@ const profileRoutes = require("./src/routes/profile.routes");
 const preferencesRoutes = require("./src/routes/preferences.routes");
 const landlordRoutes = require("./src/routes/landlord.routes");
 const adminRoutes = require("./src/routes/admin.routes");
+const chatRoutes = require("./src/routes/chat");
 
 async function start() {
   const fastify = Fastify({
@@ -27,7 +28,10 @@ async function start() {
     trustProxy: true,
   });
 
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "https://mwenyeji.com,https://www.mwenyeji.com")
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ||
+    "https://mwenyeji.com,https://www.mwenyeji.com"
+  )
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean);
@@ -54,6 +58,7 @@ async function start() {
   });
 
   await connectDB();
+  await fastify.register(chatRoutes);
 
   await fastify.register(authRoutes);
   await fastify.register(listingsRoutes);
