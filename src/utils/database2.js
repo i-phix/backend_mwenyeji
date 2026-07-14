@@ -7,8 +7,6 @@ const DB_PASSWORD = "Letmein987";
 const DB_HOST = "127.0.0.1";
 const AUTH_SOURCE = "admin";
 
-// Build the connection URI: prefer the full Atlas URI from env (MONGODB_URI),
-// swapping in the requested database name; fall back to legacy local config.
 const buildUri = (dbName) => {
   if (process.env.MONGODB_URI) {
     const u = new URL(process.env.MONGODB_URI);
